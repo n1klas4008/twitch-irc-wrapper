@@ -169,15 +169,23 @@ public class Bot implements Handler {
                 if (data[1].equals("001")) ready();
             } else {
                 String type = data[comesWithTags ? 2 : 1];
-                BaseEvent base = new BaseEvent(this, data);
-                Event event = map.getOrDefault(type, UnknownEvent::new).apply(base);
-                Optional.ofNullable(handlers.get(event.getClass())).ifPresent(list -> {
-                    list.forEach(handler -> {
-                        service.execute(() -> {
-                            handler.onEvent(cast(event));
+                try {
+                    BaseEvent base = new BaseEvent(this, data);
+                    Event event = map.getOrDefault(type, UnknownEvent::new).apply(base);
+                    Optional.ofNullable(handlers.get(event.getClass())).ifPresent(list -> {
+                        list.forEach(handler -> {
+                            service.execute(() -> {
+                                try {
+                                    handler.onEvent(cast(event));
+                                } catch (Exception e) {
+                                    Logger.error(e);
+                                }
+                            });
                         });
                     });
-                });
+                } catch (Exception e) {
+                    Logger.error(e);
+                }
             }
         }
     }
